@@ -2,6 +2,11 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// Tag Modification History :
+// 0.1 -cat- adding timeout
+// 0.2 -cat- exitcode
+//
+
 package main
 
 import (
@@ -11,12 +16,14 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net"
+	"os"
 	"strings"
 	"sync"
 	"time"
 )
 
-const defaultConcurrency = 8
+const defaultConcurrency = 512
 
 const (
 	errExpiringShortly = "%s: ** '%s' (S/N %X) expires in %d hours! **"
@@ -36,35 +43,37 @@ type sigAlgSunset struct {
 // - https://technet.microsoft.com/en-us/library/security/2880823.aspx
 // - http://googleonlinesecurity.blogspot.com/2014/09/gradually-sunsetting-sha-1.html
 var sunsetSigAlgs = map[x509.SignatureAlgorithm]sigAlgSunset{
-	x509.MD2WithRSA: sigAlgSunset{
+	x509.MD2WithRSA: {
 		name:      "MD2 with RSA",
 		sunsetsAt: time.Now(),
 	},
-	x509.MD5WithRSA: sigAlgSunset{
+	x509.MD5WithRSA: {
 		name:      "MD5 with RSA",
 		sunsetsAt: time.Now(),
 	},
-	x509.SHA1WithRSA: sigAlgSunset{
+	x509.SHA1WithRSA: {
 		name:      "SHA1 with RSA",
 		sunsetsAt: time.Date(2017, 1, 1, 0, 0, 0, 0, time.UTC),
 	},
-	x509.DSAWithSHA1: sigAlgSunset{
+	x509.DSAWithSHA1: {
 		name:      "DSA with SHA1",
 		sunsetsAt: time.Date(2017, 1, 1, 0, 0, 0, 0, time.UTC),
 	},
-	x509.ECDSAWithSHA1: sigAlgSunset{
+	x509.ECDSAWithSHA1: {
 		name:      "ECDSA with SHA1",
 		sunsetsAt: time.Date(2017, 1, 1, 0, 0, 0, 0, time.UTC),
 	},
 }
 
 var (
-	hostsFile   = flag.String("hosts", "", "The path to the file containing a list of hosts to check.")
+	hostsFile   = flag.String("hosts", "Services.txt", "The path to the file containing a list of hosts to check.")
 	warnYears   = flag.Int("years", 0, "Warn if the certificate will expire within this many years.")
 	warnMonths  = flag.Int("months", 0, "Warn if the certificate will expire within this many months.")
 	warnDays    = flag.Int("days", 0, "Warn if the certificate will expire within this many days.")
 	checkSigAlg = flag.Bool("check-sig-alg", true, "Verify that non-root certificates are using a good signature algorithm.")
 	concurrency = flag.Int("concurrency", defaultConcurrency, "Maximum number of hosts to check at once.")
+	timeout     = flag.Int("timeout", 5, "Timeout for TLS connection")
+	noexitcode  = flag.Bool("noexitcode", false, "Don't return exit code.")
 )
 
 type certErrors struct {
@@ -79,6 +88,9 @@ type hostResult struct {
 }
 
 func main() {
+	log.SetOutput(os.Stdout)
+	log.SetFlags(log.Ldate)
+
 	flag.Parse()
 
 	if len(*hostsFile) == 0 {
@@ -101,10 +113,13 @@ func main() {
 		*concurrency = defaultConcurrency
 	}
 
-	processHosts()
+	err := processHosts()
+	if !(*noexitcode) && err != 0 {
+		os.Exit(err)
+	}
 }
 
-func processHosts() {
+func processHosts() int {
 	done := make(chan struct{})
 	defer close(done)
 
@@ -124,17 +139,24 @@ func processHosts() {
 		close(results)
 	}()
 
+	errorexists := 0
+
 	for r := range results {
 		if r.err != nil {
 			log.Printf("%s: %v\n", r.host, r.err)
+			errorexists = 1
 			continue
 		}
-		for _, cert := range r.certs {
-			for _, err := range cert.errs {
-				log.Println(err)
+		if len(r.certs) > 0 {
+			for _, cert := range r.certs {
+				for _, err := range cert.errs {
+					log.Println(err)
+					errorexists = 1
+				}
 			}
 		}
 	}
+	return errorexists
 }
 
 func queueHosts(done <-chan struct{}) <-chan string {
@@ -173,11 +195,15 @@ func processQueue(done <-chan struct{}, hosts <-chan string, results chan<- host
 }
 
 func checkHost(host string) (result hostResult) {
+	var dialer net.Dialer
+
 	result = hostResult{
 		host:  host,
 		certs: []certErrors{},
 	}
-	conn, err := tls.Dial("tcp", host, nil)
+
+	dialer.Timeout = (time.Duration)(*timeout) * time.Second
+	conn, err := tls.DialWithDialer(&dialer, "tcp", host, nil)
 	if err != nil {
 		result.err = err
 		return
