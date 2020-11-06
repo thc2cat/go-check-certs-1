@@ -1,7 +1,7 @@
 TAG=$(shell git tag)
 NAME= $(notdir $(shell pwd))
 SOURCES= $(wildcard *.go)
-OPTIONS=-days 45
+OPTIONS=-days 90
 
 CLEANLIST=${NAME} ${NAME}-${TAG} ${NAME}.exe
 
@@ -18,5 +18,5 @@ clean:
 link:	${NAME}	
 	ln -s ${NAME} ${NAME}-${TAG}
 
-results.txt: Services.txt  ${NAME} Makefile
-	 @./${NAME} ${OPTIONS} 2>&1 | tee results.txt
+check: Services.txt  ${NAME} Makefile
+	 @./${NAME} ${OPTIONS} 
