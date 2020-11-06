@@ -1,13 +1,13 @@
 
 # README concernant l'implémentation locale à l'UVSQ
+L'original du code est accessible sur https://github.com/timewasted/go-check-certs
 
-## Modification du code original 
 Le code a été légèrement modifié afin de changer :
- - code de retour
- - timeouts
- - logging
+ - le code de retour,
+ - les timeouts de connections,
+ - le logging sur la sortie standard.
 
-## Détails sur mmonit.uvsq.fr  : 
+## Détails de la solution en place sur mmonit.uvsq.fr  : 
 ``` 
 cd /local/go-check-certs
 [root@dhcp go-check-certs]# ls -l
