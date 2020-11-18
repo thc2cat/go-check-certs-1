@@ -5,6 +5,7 @@
 // Tag Modification History :
 // 0.1 -cat- adding timeout
 // 0.2 -cat- exitcode
+// 0.3 -cat- retry on connection failure
 //
 
 package main
@@ -201,12 +202,20 @@ func checkHost(host string) (result hostResult) {
 		host:  host,
 		certs: []certErrors{},
 	}
+	attempts := 3
 
 	dialer.Timeout = (time.Duration)(*timeout) * time.Second
 	conn, err := tls.DialWithDialer(&dialer, "tcp", host, nil)
 	if err != nil {
-		result.err = err
-		return
+
+		for attempts--; attempts > 0 || err == nil; {
+			time.Sleep(time.Second)
+			conn, err = tls.DialWithDialer(&dialer, "tcp", host, nil)
+		}
+		if err != nil {
+			result.err = err
+			return
+		}
 	}
 	defer conn.Close()
 

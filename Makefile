@@ -5,7 +5,7 @@ OPTIONS=-days 90
 
 CLEANLIST=${NAME} ${NAME}-${TAG} ${NAME}.exe
 
-all:	${NAME}  results.txt
+all:	${NAME}
 
 ${NAME}:  ${SOURCES}
 	go build
@@ -18,5 +18,5 @@ clean:
 link:	${NAME}	
 	ln -s ${NAME} ${NAME}-${TAG}
 
-check: Services.txt  ${NAME} Makefile
+test: Services.txt  ${NAME} Makefile
 	 @./${NAME} ${OPTIONS} 
