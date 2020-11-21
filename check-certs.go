@@ -96,7 +96,7 @@ func main() {
 
 	if len(*hostsFile) == 0 {
 		flag.Usage()
-		return
+		os.Exit(-1)
 	}
 	if *warnYears < 0 {
 		*warnYears = 0
@@ -202,14 +202,16 @@ func checkHost(host string) (result hostResult) {
 		host:  host,
 		certs: []certErrors{},
 	}
-	attempts := 3
+	attempts := 5
 
 	dialer.Timeout = (time.Duration)(*timeout) * time.Second
 	conn, err := tls.DialWithDialer(&dialer, "tcp", host, nil)
+
 	if err != nil {
 
-		for attempts--; attempts > 0 || err == nil; {
+		for ; attempts > 0 || err == nil; attempts-- {
 			time.Sleep(time.Second)
+			fmt.Printf("Retrying %s\n", host)
 			conn, err = tls.DialWithDialer(&dialer, "tcp", host, nil)
 		}
 		if err != nil {
@@ -217,7 +219,12 @@ func checkHost(host string) (result hostResult) {
 			return
 		}
 	}
+
 	defer conn.Close()
+
+	if conn.ConnectionState().Version < 2 {
+		fmt.Printf("WARNING: insecure TLS version with %s\n", host)
+	}
 
 	timeNow := time.Now()
 	checkedCerts := make(map[string]struct{})
