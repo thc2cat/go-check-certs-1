@@ -228,7 +228,7 @@ func checkHost(host string) (result hostResult) {
 	defer conn.Close()
 
 	if *obsolete && conn.ConnectionState().Version < tls.VersionTLS11 {
-		fmt.Printf("WARNING: insecure %s version with %s\n", versions[conn.ConnectionState().Version], host)
+		log.Printf("WARNING: insecure %s version with %s\n", versions[conn.ConnectionState().Version], host)
 	}
 
 	timeNow := time.Now()
