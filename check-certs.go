@@ -210,12 +210,11 @@ func checkHost(host string) (result hostResult) {
 		host:  host,
 		certs: []certErrors{},
 	}
-	attempts := 3
 
 	dialer.Timeout = (time.Duration)(*timeout) * time.Second
 	conn, err := tls.DialWithDialer(&dialer, "tcp", host, nil)
 	if err != nil {
-		for ; attempts > 0 || err == nil; attempts-- {
+		for attempts := 3 ; attempts > 0 && err != nil; attempts-- {
 			time.Sleep(time.Second)
 			conn, err = tls.DialWithDialer(&dialer, "tcp", host, nil)
 		}

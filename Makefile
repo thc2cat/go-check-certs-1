@@ -1,7 +1,7 @@
 TAG=$(shell git tag)
 NAME= $(notdir $(shell pwd))
 SOURCES= $(wildcard *.go)
-OPTIONS=-days 90
+OPTIONS=-days 45
 
 CLEANLIST=${NAME} ${NAME}-${TAG} ${NAME}.exe
 

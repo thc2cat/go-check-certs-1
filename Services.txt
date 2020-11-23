@@ -16,7 +16,6 @@ ent.uvsq.fr:443
 esup-fwa-12c.dsi.uvsq.fr:443
 esup-pay.dsi.uvsq.fr:443
 etna.bib.uvsq.fr:443
-evalue.uvsq.fr:443
 falbala.uvsq.fr:443
 flitwick.lisv.uvsq.fr:5001
 gdp.uvsq.fr:443
