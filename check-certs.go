@@ -6,6 +6,7 @@
 // 0.1 -cat- adding timeout
 // 0.2 -cat- exitcode
 // 0.3 -cat- retry on connection failure
+// 0.4 -cat- short options (t,c,v)
 //
 
 package main
@@ -72,10 +73,10 @@ var (
 	warnMonths  = flag.Int("months", 0, "Warn if the certificate will expire within this many months.")
 	warnDays    = flag.Int("days", 0, "Warn if the certificate will expire within this many days.")
 	checkSigAlg = flag.Bool("check-sig-alg", true, "Verify that non-root certificates are using a good signature algorithm.")
-	concurrency = flag.Int("concurrency", defaultConcurrency, "Maximum number of hosts to check at once.")
-	timeout     = flag.Int("timeout", 5, "Timeout for TLS connection")
+	concurrency = flag.Int("c", defaultConcurrency, "concurrency : Maximum number of hosts to check at once.")
+	timeout     = flag.Int("t", 5, "Timeout for TLS connection")
 	noexitcode  = flag.Bool("noexitcode", false, "Don't return exit code.")
-	obsolete    = flag.Bool("obsolete", false, "Show insecure TLS < 1.1")
+	verbose     = flag.Bool("v", false, "verbose mode, show insecure TLS < 1.1")
 )
 
 var versions = map[uint16]string{
@@ -214,7 +215,7 @@ func checkHost(host string) (result hostResult) {
 	dialer.Timeout = (time.Duration)(*timeout) * time.Second
 	conn, err := tls.DialWithDialer(&dialer, "tcp", host, nil)
 	if err != nil {
-		for attempts := 3 ; attempts > 0 && err != nil; attempts-- {
+		for attempts := 3; attempts > 0 && err != nil; attempts-- {
 			time.Sleep(time.Second)
 			conn, err = tls.DialWithDialer(&dialer, "tcp", host, nil)
 		}
@@ -226,7 +227,7 @@ func checkHost(host string) (result hostResult) {
 
 	defer conn.Close()
 
-	if *obsolete && conn.ConnectionState().Version < tls.VersionTLS11 {
+	if *verbose && conn.ConnectionState().Version < tls.VersionTLS11 {
 		log.Printf("WARNING: insecure %s version with %s\n", versions[conn.ConnectionState().Version], host)
 	}
 
