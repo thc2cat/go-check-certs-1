@@ -1,48 +1,60 @@
-go-check-certs
-==============
 
-This is a simple utility written in Go to check SSL certificates for a list of hosts. Each certificate in the host's certificate chain is checked for the following:
+# README concernant l'implémentation locale à l'UVSQ
+L'original du code est accessible sur https://github.com/timewasted/go-check-certs.  
+Le fichier README-ORIG.md contient le readme original ainsi que le copyrigth  ( Copyright (c) 2013, Ryan Rogers )
 
-* Expiration date. By default, you will be warned if a certificate will expire within 30 days. This can be adjusted with `-years=X`, `-months=X`, and/or `-days=X`.
-* Signature algorithm. Some algorithms have already been sunset, others are in the process of being sunset. This can be spammy, so you can disable the check with `-check-sig-alg=false`.
+Le code a été légèrement modifié afin de changer :
+ - le code de retour, la concurence, les options, 
+ - les timeouts de connections et retry,
+ - le logging sur la sortie standard.
 
-Usage looks something like:
+## Détails de la solution en place sur mmonit.uvsq.fr  : 
+``` 
+cd /local/go-check-certs
+[root@dhcp go-check-certs]# ls -l
+total 5084
+-rw-r--r-- 1 root root     272 26 oct.  11:57 exclude.txt
+lrwxrwxrwx 1 root root      18  6 nov.  16:28 go-check-certs -> go-check-certs-0.2
+-rwxr-xr-x 1 root root 5196147 27 oct.  18:11 go-check-certs-0.2
+-rw-r--r-- 1 root root    1830 29 oct.  14:54 Services.txt
 
 ```
-./go-check-certs -hosts="./path/to/file/with/hosts"
+- go-check-certs-0.2 : le binaire versionné dans https://git.dsi.uvsq.fr/thiecail/go-check-certs
+- Services.txt : les services SSL accessibles à vérifier au format host:port.
+- exclude: certains services issues des exports mais non vérifiable en état.
+
+## Exemple de sortie : 
+```
+[root@dhcp go-check-certs]# ./go-check-certs -days 90
+2020/11/06 mailhost.dsi.uvsq.fr:993: x509: certificate has expired or is not yet valid: current time 2020-11-06T16:34:25+01:00 is after 2010-10-24T16:00:44Z
+2020/11/06 sinchro.uvsq.fr:443: 'sinchro.uvsq.fr' (S/N 63F3076A419FA057B586AEE6B5DDD02) expires in roughly 60 days.
+2020/11/06 scribo.rambouillet.iut-velizy.uvsq.fr:443: 'scribo.rambouillet.iut-velizy.uvsq.fr' (S/N 2DFCE9082FC90610BEF000DC56E82AE) expires in roughly 73 days.
+2020/11/06 ldap-renater.uvsq.fr:636: 'ldap-renater.uvsq.fr' (S/N 9E84500E6C8AEA5F0278A2422745245) expires in roughly 25 days.
+
+L'option -v force l'affichage des connections avec un niveau de securité faible inférieur à TLS1.1.
 ```
 
-The hosts file is simply a single `hostname:port` per line. Empty lines or lines that start with `#` are ignored.
 
-Current limitations:
---------------------
 
-* This uses the host's root CA set to check the validity of certificates.  This means that it is not able to validate things like self-signed certificates.
-* A certificate must be valid for it to be checked.
-
-License:
---------
+## Vérification via Crontabs :
 ```
-Copyright (c) 2013, Ryan Rogers
-All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions are met: 
-
-1. Redistributions of source code must retain the above copyright notice, this
-   list of conditions and the following disclaimer. 
-2. Redistributions in binary form must reproduce the above copyright notice,
-   this list of conditions and the following disclaimer in the documentation
-   and/or other materials provided with the distribution. 
-
-THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR
-ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# Verifier les certificats pour Dominique
+0  9  1 * * /local/go-check-certs/go-check-certs -hosts /local/go-check-certs/Services.txt -days 45 2>&1 | mail -s "[CERTS] verification mensuelle" dominique.fiquet@uvsq.fr
+10 10 * * 1 /local/go-check-certs/go-check-certs -hosts /local/go-check-certs/Services.txt -days 15 2>&1 | mail -s "[CERTS] verification hebdomadaire" thiecail@poste.uvsq.fr
 ```
+
+## Vérification quotidienne via Monit : 
+```
+# cat  /etc/monit.d/go-check-certs
+
+check program go-check-certs with path " /local/go-check-certs/go-check-certs -hosts /local/go-check-certs/Services.txt -days 31"
+        every "30 7 * * 1-5"
+        if status > 0 then alert
+
+```
+A noter que si le code de retour via monit ne change pas (comprendre pas de corrections), l'alerte ne sera pas mise à jour. Donc, pour un problème persistant, il vaut mieux déplacer le service dans le fichier exclude.txt avec un commentaire.
+
+#### Dossier CA
+ Contient les certificats d'autorités a rajouter sur les serveurs anciens ne disposant plus de ces autorités.
+#### Contrib 
+ Contient de quoi downloader / dedupliquer les certificats lors du premier import.
