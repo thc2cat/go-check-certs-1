@@ -1,5 +1,12 @@
 # Trusting TERENA Certificates
 
+Certificates should be tested with command : 
+
+```
+echo -n | openssl s_client -connect HOSTNAME:port
+```
+
+
 ## Ubuntu : 
 
 ```
