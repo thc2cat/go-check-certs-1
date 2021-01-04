@@ -1,5 +1,0 @@
-cas.uvsq.fr:443
-flitwick.lisv.uvsq.fr:5001
-lune.uvsq.fr:993
-ldap-renater.uvsq.fr:636
-smtps.uvsq.fr:465

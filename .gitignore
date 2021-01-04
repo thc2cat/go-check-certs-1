@@ -1,3 +1,6 @@
 LICENSE
 README.MD
 go-check-certs
+contrib
+CA
+tests
