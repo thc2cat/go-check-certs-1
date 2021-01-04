@@ -11,5 +11,5 @@ Original code from https://github.com/timewasted/go-check-certs.
 ```
 Add TLS services in file Services.txt in the form of hosts.fqdndomain:port
 go build
-./check-certs -days 45 -v 
+./go-check-certs -days 45 -v 
 ```
