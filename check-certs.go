@@ -83,7 +83,8 @@ var versions = map[uint16]string{
 	tls.VersionSSL30: "SSL",
 	tls.VersionTLS10: "TLS 1.0",
 	tls.VersionTLS11: "TLS 1.1",
-	tls.VersionTLS12: "TLS 1.2",
+	tls.VersionTLS12: "TLS 1.2", // secure
+	tls.VersionTLS13: "TLS 1.3",
 }
 
 type certErrors struct {
@@ -227,7 +228,7 @@ func checkHost(host string) (result hostResult) {
 
 	defer conn.Close()
 
-	if *verbose && conn.ConnectionState().Version < tls.VersionTLS11 {
+	if *verbose && conn.ConnectionState().Version < tls.VersionTLS12 {
 		log.Printf("WARNING: insecure %s version with %s\n", versions[conn.ConnectionState().Version], host)
 	}
 
