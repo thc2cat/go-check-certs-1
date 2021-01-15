@@ -1,5 +1,6 @@
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 Original code from https://github.com/timewasted/go-check-certs.  
 
 # Modifications 
@@ -10,6 +11,12 @@ Original code from https://github.com/timewasted/go-check-certs.
 =======
 # README concernant l'implémentation locale à l'UVSQ
 L'original du code est accessible sur https://github.com/timewasted/go-check-certs.  La version modifié est disponible via  https://git.dsi.uvsq.fr/thiecail/go-check-certs. 
+=======
+# go-check-certs 
+
+L'original du code est accessible sur https://github.com/timewasted/go-check-certs.  
+La version modifié est disponible via  https://git.dsi.uvsq.fr/thiecail/go-check-certs. 
+>>>>>>> README
 
 Le fichier README-ORIG.md contient le readme original ainsi que le  Copyright (c) 2013, Ryan Rogers.
 
@@ -55,3 +62,37 @@ L'option -v force l'affichage des connections avec un niveau de securité faible
 ## Vérification via Crontabs :
 >>>>>>> maj doc
 ```
+<<<<<<< HEAD
+=======
+# Verifier les certificats pour Dominique
+0  9  1 * * /local/go-check-certs/go-check-certs -hosts /local/go-check-certs/Services.txt -days 45 2>&1 | mail -s "[CERTS] verification mensuelle" dominique.fiquet@uvsq.fr
+10 10 * * 1 /local/go-check-certs/go-check-certs -hosts /local/go-check-certs/Services.txt -days 15 2>&1 | mail -s "[CERTS] verification hebdomadaire" thiecail@poste.uvsq.fr
+```
+
+## Vérification quotidienne via Monit : 
+```
+# cat  /etc/monit.d/go-check-certs
+
+check program go-check-certs with path "/local/go-check-certs/go-check-certs -hosts /local/go-check-certs/Services.txt -days 31"
+        every "51-59 9 * * 1-5"
+        if status > 0 then alert
+
+
+## https://mmonit.com/monit/documentation/monit.html
+## See special remarks on cron :
+# ==>  Therefore we strongly recommend to use an asterix 
+#      in the minute field or at minimum a range, e..g. 0-15. 
+#      Never use a specific minute as Monit may not run on that minute.
+#
+
+```
+A noter que si le code de retour via monit ne change pas (comprendre pas de corrections), l'alerte ne sera pas mise à jour. 
+Donc, pour un problème persistant, il vaut mieux déplacer le service dans le fichier exclude.txt avec un commentaire.
+
+Il faut aussi indiquer une marge de minutes a monit, sinon, le test risque de ne pas être lancé.
+
+### Dossier CA
+ Contient les certificats d'autorités a rajouter sur les serveurs anciens ne disposant plus de ces autorités.
+### Contrib 
+ Contient de quoi downloader / dedupliquer les certificats lors du premier import.
+>>>>>>> README
