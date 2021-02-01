@@ -28,9 +28,9 @@ import (
 const defaultConcurrency = 512
 
 const (
-	errExpiringShortly = "%s: ** '%s' (S/N %X) expires in %d hours! **"
-	errExpiringSoon    = "%s: '%s' (S/N %X) expires in roughly %d days."
-	errSunsetAlg       = "%s: '%s' (S/N %X) expires after the sunset date for its signature algorithm '%s'."
+	errExpiringShortly = "%s : ** '%s' (S/N %X) expires in %d hours! **"
+	errExpiringSoon    = "%s : '%s' (S/N %X) expires in roughly %d days."
+	errSunsetAlg       = "%s : '%s' (S/N %X) expires after the sunset date for its signature algorithm '%s'."
 )
 
 type sigAlgSunset struct {
@@ -154,7 +154,7 @@ func processHosts() int {
 
 	for r := range results {
 		if r.err != nil {
-			log.Printf("%s: %v\n", r.host, r.err)
+			log.Printf("%s : %v\n", r.host, r.err)
 			errorexists = 1
 			continue
 		}
