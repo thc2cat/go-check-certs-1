@@ -7,6 +7,7 @@
 // 0.2 -cat- exitcode
 // 0.3 -cat- retry on connection failure
 // 0.4 -cat- short options (t,c,v)
+// 0.41 - cat - : space separator
 //
 
 package main
