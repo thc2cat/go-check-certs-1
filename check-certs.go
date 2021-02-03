@@ -7,6 +7,7 @@
 // 0.2 -cat- exitcode
 // 0.3 -cat- retry on connection failure
 // 0.4 -cat- short options (t,c,v)
+// 0.41 - cat - : space separator
 //
 
 package main
@@ -28,9 +29,9 @@ import (
 const defaultConcurrency = 512
 
 const (
-	errExpiringShortly = "%s: ** '%s' (S/N %X) expires in %d hours! **"
-	errExpiringSoon    = "%s: '%s' (S/N %X) expires in roughly %d days."
-	errSunsetAlg       = "%s: '%s' (S/N %X) expires after the sunset date for its signature algorithm '%s'."
+	errExpiringShortly = "%s : ** '%s' (S/N %X) expires in %d hours! **"
+	errExpiringSoon    = "%s : '%s' (S/N %X) expires in roughly %d days."
+	errSunsetAlg       = "%s : '%s' (S/N %X) expires after the sunset date for its signature algorithm '%s'."
 )
 
 type sigAlgSunset struct {
@@ -83,7 +84,8 @@ var versions = map[uint16]string{
 	tls.VersionSSL30: "SSL",
 	tls.VersionTLS10: "TLS 1.0",
 	tls.VersionTLS11: "TLS 1.1",
-	tls.VersionTLS12: "TLS 1.2",
+	tls.VersionTLS12: "TLS 1.2", // secure
+	tls.VersionTLS13: "TLS 1.3",
 }
 
 type certErrors struct {
@@ -153,7 +155,7 @@ func processHosts() int {
 
 	for r := range results {
 		if r.err != nil {
-			log.Printf("%s: %v\n", r.host, r.err)
+			log.Printf("%s : %v\n", r.host, r.err)
 			errorexists = 1
 			continue
 		}
@@ -227,7 +229,7 @@ func checkHost(host string) (result hostResult) {
 
 	defer conn.Close()
 
-	if *verbose && conn.ConnectionState().Version < tls.VersionTLS11 {
+	if *verbose && conn.ConnectionState().Version < tls.VersionTLS12 {
 		log.Printf("WARNING: insecure %s version with %s\n", versions[conn.ConnectionState().Version], host)
 	}
 
