@@ -1,3 +1,5 @@
+#include ../make/Makefile-for-go.mk
+
 TAG=$(shell git tag)
 NAME= $(notdir $(shell pwd))
 SOURCES= $(wildcard *.go)
@@ -19,4 +21,4 @@ link:	${NAME}
 	ln -s ${NAME} ${NAME}-${TAG}
 
 test: Services.txt  ${NAME} Makefile
-	 @./${NAME} ${OPTIONS} 
+	 ./${NAME} ${OPTIONS} 

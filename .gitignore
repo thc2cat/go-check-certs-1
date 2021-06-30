@@ -4,3 +4,6 @@ go-check-certs
 contrib
 CA
 tests
+.vscode
+*.exe
+go-check-certs
